@@ -10,7 +10,7 @@ Each tool lives in its own folder, with its own README covering what it does, wh
 
 | Tool | What it does |
 |------|--------------|
-| _Coming soon_ | |
+| [ABR EPM Endpoint Health Check](ABR-EPM-HealthCheck/) | Read-only PowerShell check for a Windows endpoint running ABR EPM: agent, driver, local admin rights, EDR conflicts, portal connectivity, and optional SRA / WAM / portal cross-checks. |
 
 ## Before you run a tool
 
