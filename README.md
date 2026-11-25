@@ -11,6 +11,7 @@ Each tool lives in its own folder, with its own README covering what it does, wh
 | Tool | What it does |
 |------|--------------|
 | [ABR EPM Endpoint Health Check](ABR-EPM-HealthCheck/) | Read-only PowerShell check for a Windows endpoint running ABR EPM: agent, driver, local admin rights, EDR conflicts, portal connectivity, and optional SRA / WAM / portal cross-checks. |
+| [ABR Tenant Posture Scan](ABR-Tenant-PostureScan/) | Read-only PowerShell scan across the whole tenant via the ABR Inventory API: standing local admins, stale or outdated clients, BitLocker / TPM / compliance gaps and end-of-life operating systems, with a CSV export. Admins only. |
 
 ## Before you run a tool
 
