@@ -509,10 +509,13 @@ if ($UseApi) {
                     else { Add-Result 'API' 'Portal: user is ADMIN (not revoked)' 'PASS' 'Portal shows the user as standard.' }
 
                     if ($dev.computer -and $dev.computer.localAdmins) {
-                        $bpat = 'Company Administrators|Device Administrators|Domain Admins|Enterprise Admins|Schema Admins|Power Users'
-                        $hit = @($dev.computer.localAdmins | Where-Object { $_ -match $bpat })
-                        if ($hit.Count) { Add-Result 'API' 'Portal: privileged groups in local Admins' 'WARN' ($hit -join ', ') 'Privileged/Azure admin groups in local Administrators make members unrevokable by ABR.' }
-                        else { Add-Result 'API' 'Portal: privileged groups in local Admins' 'PASS' 'None.' }
+                        # Domain/legacy privileged groups are a real misconfiguration (WARN).
+                        # The two Entra roles are added by Windows on every Entra-joined device (INFO).
+                        $hit   = @($dev.computer.localAdmins | Where-Object { $_ -match 'Domain Admins|Enterprise Admins|Schema Admins|Power Users' })
+                        $entra = @($dev.computer.localAdmins | Where-Object { $_ -match 'Company Administrators|Device Administrators' })
+                        if ($hit.Count) { Add-Result 'API' 'Portal: privileged groups in local Admins' 'WARN' ($hit -join ', ') 'Domain/privileged groups in local Administrators make their members unrevokable by ABR. Remove them.' }
+                        else { Add-Result 'API' 'Portal: privileged groups in local Admins' 'PASS' 'No domain/privileged groups.' }
+                        if ($entra.Count) { Add-Result 'API' 'Portal: Entra admin roles in local Admins' 'INFO' (($entra -join ', ') + ' - Windows default on Entra-joined devices (Global Administrator and Entra Joined Device Local Administrator roles).') 'Members of these roles are local admins ABR cannot revoke - keep the roles small.' }
                     }
                 }
             } catch { Add-Result 'API' 'This device in ABR portal' 'WARN' "Failed: $($_.Exception.Message)" }
