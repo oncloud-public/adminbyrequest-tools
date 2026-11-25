@@ -11,6 +11,7 @@ Each tool lives in its own folder, with its own README covering what it does, wh
 | Tool | What it does |
 |------|--------------|
 | [ABR EPM Endpoint Health Check](ABR-EPM-HealthCheck/) | Read-only PowerShell check for a Windows endpoint running ABR EPM: agent, driver, local admin rights, EDR conflicts, portal connectivity, and optional SRA / WAM / portal cross-checks. |
+| [ABR Threat Report](ABR-ThreatReport/) | Reads the ABR Events and Auditlog APIs and writes one HTML report of threat detections across the tenant: malware, malicious elevated apps, clock tampering, break-glass use, local account changes, policy tampering. |
 
 ## Before you run a tool
 
