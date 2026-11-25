@@ -208,7 +208,7 @@ $me = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 if ($tok -and $tok.Count) {
     if ($tok | Where-Object { $_.SID -eq $SidAdministrators }) {
         if ($IsAdmin) {
-            Add-Result 'local-admin' 'Current user NOT a local admin' 'WARN' "Script is running ELEVATED as $me, so this check reflects the elevated account, not the end user." 'Re-run in a normal (non-elevated) PowerShell as the end user.'
+            Add-Result 'local-admin' 'Current user NOT a local admin' 'INFO' "Skipped: script is running ELEVATED as $me. Run it in a normal (non-elevated) PowerShell as the end user to check their rights."
         } else {
             Add-Result 'local-admin' 'Current user NOT a local admin' 'FAIL' "$me is a member of local Administrators (directly or through a nested group) => ABR cannot revoke (tray may still show green). Ignore this if the user is inside an active ABR admin session." 'Remove the user, or the AD/Entra group that grants it (e.g. a Restricted Groups GPO or Intune policy), from local Administrators.'
         }
@@ -236,7 +236,12 @@ try {
     if ($broad.Count) {
         Add-Result 'admins-group' 'Local Administrators membership' 'WARN' ("Broad groups in local Administrators: " + (($broad | ForEach-Object { $_.Name }) -join ', ')) 'Any domain/privileged group nested here makes its members unrevokable by ABR.'
     } else {
-        Add-Result 'admins-group' 'Local Administrators membership' 'INFO' ("Members: " + (($admins | ForEach-Object { $_.Name }) -join ', '))
+        # Entra ID roles/groups show only as SIDs (S-1-12-1-...). On Entra-joined devices Windows adds
+        # the Global Administrator role and the "Microsoft Entra Joined Device Local Administrator" role by default.
+        $memberNames = $admins | ForEach-Object { if ("$($_.Name)" -match '^S-1-12-1-') { "$($_.Name) (Entra role/group)" } else { $_.Name } }
+        $entraNote = ''
+        if ($admins | Where-Object { "$($_.Name)" -match '^S-1-12-1-' }) { $entraNote = ' Entra SIDs are normally the Global Administrator and Entra Joined Device Local Administrator roles; their members are local admins on this device and cannot be revoked by ABR - keep those roles small.' }
+        Add-Result 'admins-group' 'Local Administrators membership' 'INFO' ("Members: " + ($memberNames -join ', ') + '.' + $entraNote)
     }
 } catch {
     # Get-LocalGroupMember fails on some machines (e.g. orphaned Entra SIDs); fall back to ADSI.
@@ -294,15 +299,21 @@ try {
 # =====================================================================
 try {
     $files = @("$AbrRoot\AdminByRequest.exe", "$AbrRoot\ProcMon.sys", "$VAudioRoot\Audckq32.exe")
-    $missing = @(); $unsigned = @()
+    $missing = @(); $unsigned = @(); $denied = @()
     foreach ($f in $files) {
-        if (-not (Test-Path $f)) { $missing += (Split-Path $f -Leaf); continue }
-        try { if ((Get-AuthenticodeSignature $f).Status -ne 'Valid') { $unsigned += (Split-Path $f -Leaf) } } catch {}
+        $leaf = Split-Path $f -Leaf
+        try {
+            if (-not (Test-Path -LiteralPath $f -ErrorAction Stop)) { $missing += $leaf; continue }
+            if ((Get-AuthenticodeSignature -LiteralPath $f -ErrorAction Stop).Status -ne 'Valid') { $unsigned += $leaf }
+        } catch [System.UnauthorizedAccessException] { $denied += $leaf }
+          catch { if ($_.Exception.Message -match 'denied') { $denied += $leaf } else { throw } }
     }
     if ($missing) {
         Add-Result 'files' 'ABR core files present' 'FAIL' ("Missing: " + ($missing -join ', ') + " (possible AV quarantine).") 'Restore from AV quarantine + add ABR exclusions; repair/reinstall the agent if the install is corrupted.'
     } elseif ($unsigned) {
         Add-Result 'files' 'ABR core files signed' 'WARN' ("Not a valid signature: " + ($unsigned -join ', ')) 'Investigate tampering/AV; verify with certutil -hashfile.'
+    } elseif ($denied) {
+        Add-Result 'files' 'ABR core files present & signed' 'INFO' ("Not readable as a standard user: " + ($denied -join ', ') + ". Normal - ABR protects these files.") 'To verify them, an admin can re-run the script elevated.'
     } else {
         Add-Result 'files' 'ABR core files present & signed' 'PASS' 'AdminByRequest.exe, ProcMon.sys, Audckq32.exe OK.'
     }
@@ -372,7 +383,9 @@ try {
 #     In AUTHENTICATION mode a native-style UAC prompt is EXPECTED (the user
 #     types their own standard credentials) - so it is NOT a fault there.
 # =====================================================================
-try {
+if (-not (Test-Path $PolicyKey)) {
+    Add-Result 'mode' 'ABR elevation mode' 'INFO' 'No local ABR Policies key on this device (settings come from the portal). Reminder: in Authentication mode a UAC-style prompt is normal; only in Confirmation mode does a native UAC mean ABR could not hook.'
+} else { try {
     $pol = Get-ItemProperty $PolicyKey -ErrorAction Stop
     $modeVals = $pol.PSObject.Properties | Where-Object { $_.Name -match 'mode|auth|confirm' -and $_.Name -notmatch 'DebugMode|offlinemode|enablesessions|^PS' }
     if ($modeVals) {
@@ -380,7 +393,7 @@ try {
     } else {
         Add-Result 'mode' 'ABR elevation mode' 'INFO' 'Not determinable from the Policies key. Reminder: in Authentication mode a UAC-style prompt is normal; only in Confirmation mode does a native UAC mean ABR could not hook.'
     }
-} catch { Add-Result 'mode' 'ABR elevation mode' 'INFO' 'Policies key not readable (standard user).' }
+} catch { Add-Result 'mode' 'ABR elevation mode' 'INFO' 'Policies key not readable (standard user).' } }
 
 # =====================================================================
 # SRA - Secure Remote Access / Remote Support      (-IncludeSRA)

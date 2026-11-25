@@ -14,6 +14,8 @@ Copy `ABR-EPM-HealthCheck.ps1` to the endpoint and run it **as the signed-in end
 powershell -ExecutionPolicy Bypass -File .\ABR-EPM-HealthCheck.ps1
 ```
 
+As a standard user, a few items show as INFO instead of PASS (for example, ABR protects its own files, so they can't be read). That's expected. An admin can re-run the script elevated to verify those items; the local-admin check is skipped in an elevated run.
+
 `-ExecutionPolicy Bypass` applies to this one run only, because the script isn't code-signed. Read the script before you run it.
 
 ### Options
