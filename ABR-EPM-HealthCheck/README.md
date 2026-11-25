@@ -58,6 +58,27 @@ To check the user's rights correctly and also use the API, run the script twice:
 - ABR portal is reachable (api.adminbyrequest.com:443), so approvals don't fall back to offline PIN
 - Windows build and MSI SecureRepair policy, pending reboot, DebugMode left on, auto-update override, and elevation mode (Confirmation vs Authentication)
 
+**Secure Remote Access (`-IncludeSRA`):**
+
+- `messagebus.exe` is running (without it, Remote Support pop-ups don't appear)
+- MQTT brokers reachable on 8883 (`FastTrackHubEU1` / `FastTrackHubUS1.azure-devices.net`)
+- Cloudflare tunnel reachable on 7844 (`region1` / `region2.v2.argotunnel.com`)
+- RDP (3389) enabled, needed only for Unattended Access
+- ABR version supports Remote Support (8.4.0 build 31936 or later)
+- No WinHTTP proxy that decrypts TLS (it breaks MQTT and the tunnel)
+
+**Web Access Management (`-IncludeWAM`):**
+
+- Installed apps that WAM's TLS inspection commonly breaks (WhatsApp, Splashtop, AnyDesk, GlobalProtect, Cloudflare WARP, FortiClient, OpenVPN, Zscaler), so you can add bypasses
+
+**Portal cross-check (`-UseApi`):**
+
+- This device is registered in the ABR portal
+- When it last reported (warns after `-StaleDays`, default 7)
+- Portal version matches the installed version
+- Whether the portal sees the user as admin
+- Domain or privileged groups in local Administrators (WARN); the default Entra admin roles are shown as INFO
+
 Group checks use well-known SIDs, so they work on Windows in any language.
 
 ## Sample output
