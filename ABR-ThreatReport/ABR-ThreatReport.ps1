@@ -124,15 +124,15 @@ $EventCodes = 93,94,73,91,72,70,102,10,12,13,20,21,182,92,124,131
 
 if ($Sample) {
     $now = (Get-Date).ToUniversalTime()
-    function SE($id,$code,$h,$dev,$usr,$file,$text,$sha) { [pscustomobject]@{ id=$id; eventCode=$code; eventText=$text; eventTimeUTC=$now.AddHours(-$h).ToString('o'); computerName=$dev; userAccount=$usr; application=[pscustomobject]@{ file=$file; vendor=$null; sha256=$sha } } }
+    function New-SampleEvent($id,$code,$h,$dev,$usr,$file,$text,$sha) { [pscustomobject]@{ id=$id; eventCode=$code; eventText=$text; eventTimeUTC=$now.AddHours(-$h).ToString('o'); computerName=$dev; userAccount=$usr; application=[pscustomobject]@{ file=$file; vendor=$null; sha256=$sha } } }
     $events = @(
-        (SE 1 93 30 'WIN-SALES-07' 'CONTOSO\dana' 'invoice_viewer.exe' 'Blocked: detected malware' 'aa11')
-        (SE 2 94 52 'WIN-FIN-02' 'CONTOSO\omer' 'setup_tool.exe' 'Blocked: suspected malware' 'bb22')
-        (SE 3 72 70 'WIN-IT-01' 'WIN-IT-01\ABR-BreakGlass' '' 'Break glass account logged on' '')
-        (SE 4 13 90 'WIN-HR-05' 'CONTOSO\maya' '' 'Local user created: support2' '')
-        (SE 5 92 5.0 'WIN-DEV-11' 'CONTOSO\noa' 'nc.exe' 'Execution blocked' 'cc33')
-        (SE 6 92 4.8 'WIN-DEV-11' 'CONTOSO\noa' 'psexec.exe' 'Execution blocked' 'dd44')
-        (SE 7 131 4.6 'WIN-DEV-11' 'CONTOSO\noa' 'mimikatz.exe' 'Execution blocked' 'ee55')
+        (New-SampleEvent 1 93 30 'WIN-SALES-07' 'CONTOSO\dana' 'invoice_viewer.exe' 'Blocked: detected malware' 'aa11')
+        (New-SampleEvent 2 94 52 'WIN-FIN-02' 'CONTOSO\omer' 'setup_tool.exe' 'Blocked: suspected malware' 'bb22')
+        (New-SampleEvent 3 72 70 'WIN-IT-01' 'WIN-IT-01\ABR-BreakGlass' '' 'Break glass account logged on' '')
+        (New-SampleEvent 4 13 90 'WIN-HR-05' 'CONTOSO\maya' '' 'Local user created: support2' '')
+        (New-SampleEvent 5 92 5.0 'WIN-DEV-11' 'CONTOSO\noa' 'nc.exe' 'Execution blocked' 'cc33')
+        (New-SampleEvent 6 92 4.8 'WIN-DEV-11' 'CONTOSO\noa' 'psexec.exe' 'Execution blocked' 'dd44')
+        (New-SampleEvent 7 131 4.6 'WIN-DEV-11' 'CONTOSO\noa' 'mimikatz.exe' 'Execution blocked' 'ee55')
     )
     $audit = @(
         [pscustomobject]@{ id=11; type='Run As Admin'; requestTimeUTC=$now.AddHours(-20).ToString('o'); startTimeUTC=$now.AddHours(-20).ToString('o'); endTimeUTC=$now.AddHours(-20).ToString('o'); user=[pscustomobject]@{account='CONTOSO\dana'}; computer=[pscustomobject]@{name='WIN-SALES-07'}; application=[pscustomobject]@{ file='pdfconvert.exe'; vendor=$null; scanResult='Malicious (3 engines)'; scanResultCode=2; threat='Trojan:Win32/Wacatac'; sha256='ff66' }; auditlogLink='https://www.adminbyrequest.com/' }
@@ -276,7 +276,7 @@ if (-not $BadHashFile) { $F['T-10'].Status = 'Not run'; $F['T-10'].Fix = 'Run ag
 # ---------------------------------------------------------------------
 # HTML report
 # ---------------------------------------------------------------------
-function H { param($s) [System.Net.WebUtility]::HtmlEncode("$s") }
+function Enc { param($s) [System.Net.WebUtility]::HtmlEncode("$s") }
 $sevRank = @{ Critical = 0; High = 1; Medium = 2; Low = 3 }
 $stRank  = @{ Detected = 0; Clear = 1; 'Not run' = 2; 'Not available' = 3 }
 $list = @($F.Values | Sort-Object @{e={$stRank[$_.Status]}}, @{e={$sevRank[$_.Severity]}}, Id)
@@ -294,25 +294,25 @@ $sb = New-Object System.Text.StringBuilder
 foreach ($f in $list) {
     $sev = $f.Severity.ToLower(); $st = ($f.Status -replace ' ', '-').ToLower()
     [void]$sb.Append("<details class='card st-$st'" + $(if ($f.Status -eq 'Detected') { ' open' } else { '' }) + "><summary>")
-    [void]$sb.Append("<span class='id'>$(H $f.Id)</span><span class='name'>$(H $f.Name)</span>")
-    [void]$sb.Append("<span class='sev sev-$sev'>$(H $f.Severity)</span>")
+    [void]$sb.Append("<span class='id'>$(Enc $f.Id)</span><span class='name'>$(Enc $f.Name)</span>")
+    [void]$sb.Append("<span class='sev sev-$sev'>$(Enc $f.Severity)</span>")
     $cnt = if ($f.Status -eq 'Detected') { "$(@($f.Rows | Where-Object { $_.Detail -notlike 'Context:*' }).Count) found" } else { $f.Status }
-    [void]$sb.Append("<span class='st'>$(H $cnt)</span></summary><div class='body'>")
-    [void]$sb.Append("<p>$(H $f.Why)</p>")
-    if ($f.Fix) { [void]$sb.Append("<p class='fix'><b>What to do:</b> $(H $f.Fix)</p>") }
+    [void]$sb.Append("<span class='st'>$(Enc $cnt)</span></summary><div class='body'>")
+    [void]$sb.Append("<p>$(Enc $f.Why)</p>")
+    if ($f.Fix) { [void]$sb.Append("<p class='fix'><b>What to do:</b> $(Enc $f.Fix)</p>") }
     if ($f.Rows.Count) {
         [void]$sb.Append("<div class='tw'><table><thead><tr><th>Time (UTC)</th><th>Device</th><th>User</th><th>Detail</th></tr></thead><tbody>")
         foreach ($r in ($f.Rows | Sort-Object Time -Descending)) {
             $tt = if ($r.Time) { ([datetime]$r.Time).ToString('yyyy-MM-dd HH:mm') } else { '' }
-            $detail = H $r.Detail
-            if ($r.Link -and "$($r.Link)" -match '^https://') { $detail += " <a href='$(H $r.Link)' target='_blank' rel='noopener'>ABR record</a>" }
-            [void]$sb.Append("<tr><td>$tt</td><td>$(H $r.Device)</td><td>$(H $r.User)</td><td>$detail</td></tr>")
+            $detail = Enc $r.Detail
+            if ($r.Link -and "$($r.Link)" -match '^https://') { $detail += " <a href='$(Enc $r.Link)' target='_blank' rel='noopener'>ABR record</a>" }
+            [void]$sb.Append("<tr><td>$tt</td><td>$(Enc $r.Device)</td><td>$(Enc $r.User)</td><td>$detail</td></tr>")
         }
         [void]$sb.Append("</tbody></table></div>")
     }
     [void]$sb.Append("</div></details>")
 }
-$notesHtml = if ($script:Notes.Count) { '<ul class="notes">' + (($script:Notes | ForEach-Object { "<li>$(H $_)</li>" }) -join '') + '</ul>' } else { '' }
+$notesHtml = if ($script:Notes.Count) { '<ul class="notes">' + (($script:Notes | ForEach-Object { "<li>$(Enc $_)</li>" }) -join '') + '</ul>' } else { '' }
 $sampleBanner = if ($Sample) { "<div class='banner'>SAMPLE DATA - made-up records to show the report layout. Not from any tenant.</div>" } else { '' }
 
 $html = @"
@@ -348,8 +348,8 @@ td:first-child{white-space:nowrap}a{color:inherit}
 </style></head><body><div class="wrap">
 $sampleBanner
 <h1>Admin By Request - Threat Report</h1>
-<div class="meta">Last $Days days (since $($Since.ToString('yyyy-MM-dd')) UTC) &middot; generated $((Get-Date).ToString('yyyy-MM-dd HH:mm')) &middot; source $(H $ApiBase) &middot; $($events.Count) events and $($audit.Count) audit records read &middot; $script:Calls API calls</div>
-<div class="verdict $vclass">$(H $verdict)</div>
+<div class="meta">Last $Days days (since $($Since.ToString('yyyy-MM-dd')) UTC) &middot; generated $((Get-Date).ToString('yyyy-MM-dd HH:mm')) &middot; source $(Enc $ApiBase) &middot; $($events.Count) events and $($audit.Count) audit records read &middot; $script:Calls API calls</div>
+<div class="verdict $vclass">$(Enc $verdict)</div>
 <div class="tiles">
 <div class="tile crit"><b>$crit</b>Critical detected</div>
 <div class="tile high"><b>$high</b>High detected</div>
