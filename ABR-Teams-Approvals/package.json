@@ -1,0 +1,25 @@
+{
+  "name": "abr-teams-approvals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Admin By Request approvals in Microsoft Teams, for one or many ABR tenants (MSP).",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.1",
+    "@azure/identity": "^4.13.0",
+    "@azure/keyvault-secrets": "^4.10.0",
+    "@microsoft/agents-hosting": "1.10.2",
+    "@microsoft/agents-hosting-express": "1.10.2",
+    "@microsoft/agents-hosting-extensions-teams": "1.10.2",
+    "@microsoft/teams-js": "^2.59.0",
+    "express": "5.2.1",
+    "fflate": "^0.8.3",
+    "jose": "^6.2.18"
+  }
+}

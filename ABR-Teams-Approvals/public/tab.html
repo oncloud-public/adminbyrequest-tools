@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customers</title>
+<style>
+  :root {
+    --bg: #f5f5f5; --surface: #ffffff; --text: #242424; --muted: #616161; --line: #e0e0e0;
+    --brand: #5b5fc7; --brand-hover: #4f52b2; --brand-text: #ffffff;
+    --ok: #13a10e; --warn: #c19c00; --bad: #c4314b; --chip: #f0f0f0; --focus: #5b5fc7;
+    --shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1f1f1f; --surface: #292929; --text: #ffffff; --muted: #adadad; --line: #3d3d3d;
+    --brand: #7f85f5; --brand-hover: #9299f7; --brand-text: #1f1f1f;
+    --ok: #54b054; --warn: #e3c33f; --bad: #e37d80; --chip: #333333; --focus: #9299f7;
+    --shadow: none;
+  }
+  :root[data-theme="contrast"] {
+    --bg: #000000; --surface: #000000; --text: #ffffff; --muted: #ffffff; --line: #ffffff;
+    --brand: #ffff00; --brand-hover: #ffff00; --brand-text: #000000;
+    --ok: #3ff23f; --warn: #ffff00; --bad: #ff6b6b; --chip: #000000; --focus: #1aebff;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0; }
+  .count { color: var(--muted); }
+  .spacer { flex: 1; }
+  button, .btn { font: inherit; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+    padding: 5px 12px; min-height: 32px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-text); font-weight: 600; }
+  button.primary:hover { background: var(--brand-hover); }
+  button.danger { color: var(--bad); }
+  button:disabled { opacity: .55; cursor: default; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; }
+  tr:last-child td { border-bottom: 0; }
+  td.name { font-weight: 600; }
+  td .sub { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .status { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  .dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+  .actions { display: flex; gap: 6px; flex-wrap: nowrap; justify-content: flex-end; }
+  td.act { width: 1%; white-space: nowrap; }
+  .actions button { min-height: 28px; padding: 3px 10px; font-size: 13px; }
+  .empty { padding: 36px 20px; text-align: center; color: var(--muted); }
+  .empty strong { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
+  form.card { padding: 18px; margin-bottom: 16px; display: grid; gap: 14px; }
+  form h2 { font-size: 16px; margin: 0; }
+  label { display: grid; gap: 4px; font-weight: 600; }
+  label .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+  input, select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 6px 8px; min-height: 32px; width: 100%; }
+  .row { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+  .group-pick { display: grid; gap: 6px; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; border: 1px solid var(--line); background: var(--surface); }
+  .msg.bad { border-color: var(--bad); } .msg.ok { border-color: var(--ok); }
+  .center { padding: 60px 20px; text-align: center; color: var(--muted); }
+  [hidden] { display: none !important; }
+  @media (max-width: 760px) {
+    .row { grid-template-columns: 1fr; }
+    thead { display: none; }
+    tr { display: grid; padding: 10px 14px; border-bottom: 1px solid var(--line); gap: 4px; }
+    tr:last-child { border-bottom: 0; }
+    td { padding: 0; border: 0; }
+    .actions { justify-content: flex-start; margin-top: 6px; flex-wrap: wrap; }
+    td.act { width: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div id="loading" class="center">Loading…</div>
+  <div id="blocked" class="center" hidden></div>
+
+  <div id="app" hidden>
+    <header>
+      <h1>Customers</h1><span class="count" id="count"></span>
+      <span class="spacer"></span>
+      <button class="primary" id="add">Add customer</button>
+    </header>
+
+    <div id="msg" class="msg" role="status" hidden></div>
+
+    <form id="form" class="card" hidden autocomplete="off">
+      <h2 id="formTitle">Add customer</h2>
+      <div class="row">
+        <label>Customer name
+          <input id="fName" maxlength="60" required placeholder="Contoso">
+        </label>
+        <label>ABR API key
+          <input id="fKey" type="password" maxlength="200" placeholder="Paste the key" autocomplete="new-password">
+          <span class="hint" id="keyHint">In the customer's ABR portal: Settings › Tenant Settings › API Keys. The region is found automatically.</span>
+        </label>
+      </div>
+      <div class="row">
+        <label>Channel
+          <select id="fChannel" required></select>
+          <span class="hint">Channels where the app is installed. Missing one? Add the app to it and @mention it there once.</span>
+        </label>
+        <div class="group-pick">
+          <label for="fGroupSearch">Approver group
+            <input id="fGroupSearch" placeholder="Search security groups">
+          </label>
+          <select id="fGroup" required aria-label="Approver group"></select>
+          <span class="hint">Only members of this group can approve or deny this customer's requests.</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel">Cancel</button>
+        <button type="submit" class="primary" id="save">Save</button>
+      </div>
+    </form>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>Customer</th><th>Channel</th><th>Approvers</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="empty" class="empty" hidden>
+        <strong>No customers yet</strong>
+        Add a customer with its ABR API key, and its requests show up in the channel you pick.
+      </div>
+    </div>
+  </div>
+</main>
+<script src="/tab/teams.js"></script>
+<script src="/tab/tab.js"></script>
+</body>
+</html>
