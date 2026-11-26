@@ -23,8 +23,8 @@ function manifest (host) {
     },
     name: { short: 'ABR Approvals by OnCloud', full: 'Approvals for Admin By Request, by OnCloud' },
     description: {
-      short: 'Approve Admin By Request requests in Teams.',
-      full: 'Posts Admin By Request elevation requests from one or many customers to Teams channels. Approvers approve or deny on the card, and the card updates for everyone with who decided and when.'
+      short: 'Approve Admin By Request requests from many tenants in Teams.',
+      full: 'For MSPs, resellers and organizations with several Admin By Request tenants. Posts each tenant\'s elevation requests to its Teams channel. Approvers approve or deny on the card, and the card updates for everyone with who decided and when.'
     },
     icons: { color: 'color.png', outline: 'outline.png' },
     accentColor: '#1D1B16',

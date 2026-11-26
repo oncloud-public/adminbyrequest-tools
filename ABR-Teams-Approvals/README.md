@@ -1,13 +1,17 @@
 # ABR Approvals by OnCloud
 
-Approve [Admin By Request](https://www.adminbyrequest.com) (ABR) requests in Microsoft Teams, for one ABR tenant
-or for all of an MSP's customers. Requests show up as cards in the channel you pick per customer. Approvers
-click **Approve** or **Deny** on the card, and the card updates for everyone with who decided and when.
+Approve [Admin By Request](https://www.adminbyrequest.com) (ABR) requests in Microsoft Teams **across many ABR
+tenants**: for MSPs and resellers handling their customers' requests, and for organizations with more than one
+ABR tenant. Each tenant's requests show up as cards in the channel you pick for it. Approvers click **Approve** or
+**Deny** on the card, and the card updates for everyone with who decided and when.
+
+**Only one ABR tenant?** Use Admin By Request's own Microsoft Teams integration: it's built in and simpler to set up.
+This app is for when one team approves for several tenants from one place.
 
 > **Not an official Admin By Request product.** Built and maintained by OnCloud, an Admin By Request partner.
 >
 > **Preview (v0.1).** Tested with one ABR tenant, and multi-tenant tested by registering the same tenant twice.
-> Feedback from MSPs running it with several customers is welcome. Report security issues privately: see [SECURITY.md](../SECURITY.md).
+> Feedback from MSPs and resellers running it with several customer tenants is welcome. Report security issues privately: see [SECURITY.md](../SECURITY.md).
 
 | A new request | After approval | Customers tab |
 |---|---|---|
